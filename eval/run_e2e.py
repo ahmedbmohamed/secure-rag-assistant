@@ -85,7 +85,8 @@ def _doc_id(source: dict) -> str:
         return "owasp-" + source["reference"].split(":")[0].lower()
     if source["source"] == "nist":
         return "nist-" + source["reference"].lower()
-    return "internal-" + source["reference"].removesuffix(".md")
+    stem, _, ext = source["reference"].rpartition(".")
+    return "internal-" + (stem if ext == "md" else f"{stem}-{ext}")
 
 
 if __name__ == "__main__":

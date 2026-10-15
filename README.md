@@ -87,24 +87,26 @@ Measured in CI on every push (`eval/run_eval.py`, gates in [`eval/gates.json`](e
 
 | Metric | Result | Gate |
 |---|---|---|
-| Expected document among the 5 sources given to the LLM (hit@5) | **96.2%** (51 of 53 questions) | at least 85% |
-| Mean reciprocal rank (MRR@5) | **0.931** | at least 0.70 |
+| Expected document among the 5 sources given to the LLM (hit@5) | **96.6%** (57 of 59 questions) | at least 85% |
+| Mean reciprocal rank (MRR@5) | **0.929** | at least 0.70 |
 | Off-topic questions refused before calling the LLM | **91.7%** (11 of 12) | at least 80% |
 | Real questions wrongly refused | **0%** | at most 5% |
 | Prompt injection detection, precision and recall | **100% / 100%** (20 attacks, 25 normal questions) | at least 95% / 90% |
 
-The injection set was written while building the rules, so 100% says the known patterns are covered, not that every new attack is caught. That is why injection detection is only one of the layers.
+The 59 questions include questions answered by the PDF, Word and Excel files. The injection set was written while building the rules, so 100% says the known patterns are covered, not that every new attack is caught. That is why injection detection is only one of the layers.
 
 End-to-end, with the local LLM (`qwen2.5:3b` on a 4-core CPU, no GPU), on 20 questions:
 
 | Check | Result |
 |---|---|
-| Questions answered with sources | **100%** (20 of 20) |
-| Answers citing an expected document | **95%** (19 of 20) |
+| Questions answered with sources | **95%** (19 of 20) |
+| Answers citing an expected document | **90%** of questions (18 of 20), **94.7%** of the answered ones |
 | Off-topic questions refused | **6 of 6** |
 | Injection attempts blocked | **6 of 6** |
 | Restricted runbook shown to a user without the role | **never** |
-| Median time per answer | **31 s** |
+| Median time per answer | **19 s** |
+
+The unanswered question was asked in French, which the English embedding model handles poorly (see Limitations).
 
 Full results: [reports/eval.json](reports/eval.json) and [reports/e2e.json](reports/e2e.json).
 
@@ -112,13 +114,15 @@ The evaluation sets are small and were written for this project, so these number
 
 ## Screenshots
 
-| Internal runbook, answered for a security-admin | OWASP answer for a staff user |
+| Sign-in, then MFA set up with an authenticator app | Answer from a PDF, with the exact section |
 |---|---|
-| ![Answer](docs/answer.png) | ![Standards](docs/standards.png) |
+| ![MFA setup](docs/mfa_setup.png) | ![PDF answer](docs/pdf_answer.png) |
 | **Access control**: `user1` asks for the restricted runbook | **Prompt injection** blocked before the LLM |
 | ![Access control](docs/access_control.png) | ![Injection blocked](docs/injection_blocked.png) |
+| **Internal runbook** answered for a security-admin | **Administration**: accounts, MFA status, security events |
+| ![Answer](docs/answer.png) | ![Administration](docs/admin.png) |
 
-Screenshots from the end-to-end workflow, with `qwen2.5:3b` running locally on the CI machine.
+Screenshots from the end-to-end workflow, with `qwen2.5:3b` running locally on the CI machine. The workflow signs in each account and sets up its MFA like a person would.
 
 ## Run it
 

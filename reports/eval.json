@@ -1,66 +1,27 @@
 {
- "embedder": "hashing-4096",
+ "embedder": "BAAI/bge-small-en-v1.5",
  "questions": 59,
- "hit_at_5": 0.915,
- "mrr_at_5": 0.842,
- "min_score": 0.1,
- "out_of_scope_rejection": 0.583,
- "in_scope_false_rejection": 0.017,
- "score_in_scope_min": 0.072,
- "score_out_of_scope_max": 0.18,
+ "hit_at_5": 0.966,
+ "mrr_at_5": 0.929,
+ "min_score": 0.55,
+ "out_of_scope_rejection": 0.917,
+ "in_scope_false_rejection": 0.0,
+ "score_in_scope_min": 0.601,
+ "score_out_of_scope_max": 0.562,
  "injection_precision": 1.0,
  "injection_recall": 1.0,
  "retrieval_misses": [
-  {
-   "question": "What information must an audit record contain?",
-   "expected": [
-    "nist-au-3"
-   ],
-   "got": [
-    "nist-au-7",
-    "nist-au-7",
-    "nist-au-6",
-    "nist-au-6",
-    "nist-au-11"
-   ]
-  },
   {
    "question": "When should users be asked to authenticate again?",
    "expected": [
     "nist-ia-11"
    ],
    "got": [
-    "nist-ia-8",
-    "nist-ia-2",
-    "nist-ia-9",
-    "nist-ia-2",
-    "nist-ia-8"
-   ]
-  },
-  {
-   "question": "How can a system be protected against denial of service?",
-   "expected": [
-    "nist-sc-5"
-   ],
-   "got": [
-    "nist-sc-45",
-    "nist-sc-22",
-    "nist-ac-8",
-    "owasp-a07",
-    "nist-ac-8"
-   ]
-  },
-  {
-   "question": "What are common security misconfigurations?",
-   "expected": [
-    "owasp-a02"
-   ],
-   "got": [
-    "nist-cp-13",
-    "nist-ra-2",
-    "nist-ra-2",
-    "nist-si-5",
-    "nist-sc-38"
+    "nist-ia-5",
+    "nist-ia-5",
+    "nist-ia-5",
+    "nist-ac-14",
+    "owasp-a07"
    ]
   },
   {
@@ -70,11 +31,11 @@
     "internal-demo-bank-security-policy"
    ],
    "got": [
-    "nist-sc-18",
-    "nist-sc-18",
-    "nist-sc-18",
-    "nist-sc-18",
-    "nist-ia-4"
+    "nist-si-19",
+    "nist-sc-23",
+    "nist-sc-10",
+    "nist-si-14",
+    "nist-au-8"
    ]
   }
  ]
