@@ -1,0 +1,148 @@
+# Secure RAG Assistant
+
+[![CI](https://github.com/ahmedbmohamed/secure-rag-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/ahmedbmohamed/secure-rag-assistant/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.13-blue)
+![LangChain](https://img.shields.io/badge/LangChain-1.6-1C3C3C)
+![pgvector](https://img.shields.io/badge/PostgreSQL-pgvector-336791)
+
+A question answering assistant for security consultants. It answers from **OWASP Top 10:2025**, **NIST SP 800-53** and a client's **internal policies**, gives a source for every statement, and is built so that client data stays under control:
+
+* **Local by default.** The LLM (Ollama) and the embeddings run on the client's own machine or network. Nothing is sent to a third-party AI service.
+* **Access control inside the search.** A document reserved to the security team is never retrieved for other users, so it can never reach the prompt.
+* **Prompt injection defense** on questions and on documents. A poisoned document is quarantined at ingestion.
+* **Grounded answers.** Every statement must cite a source. Invented citations are removed, and an answer without a source is not shown.
+* **Fail closed.** If the local LLM is down, the request is refused. It is never rerouted to another provider.
+* **Integrity and audit.** A signed manifest detects a modified index at startup, and every request is logged for the SIEM.
+
+The threat model is in [SECURITY.md](SECURITY.md).
+
+## Architecture
+
+```mermaid
+flowchart LR
+    U[User] -->|API key| UI[Streamlit UI]
+    UI --> API[FastAPI<br/>auth, rate limit]
+    subgraph backend [Internal network, no internet access]
+        API --> G1{Injection<br/>check}
+        G1 -- blocked --> LOG[(Audit log)]
+        G1 -- ok --> R[Hybrid search<br/>vector + keywords<br/>filtered by role]
+        R --> DB[(PostgreSQL<br/>pgvector)]
+        R --> T{Relevant<br/>enough?}
+        T -- no --> REF[Refuse]
+        T -- yes --> LLM[Local LLM<br/>Ollama]
+        LLM --> C{Valid<br/>citations?}
+        C -- yes --> A[Answer + sources]
+        C -- no --> REF
+    end
+    API --> LOG
+    LOG --> SIEM[SIEM / Wazuh]
+```
+
+Ingestion runs once, before the service starts:
+
+```mermaid
+flowchart LR
+    D[OWASP, NIST,<br/>internal documents] --> S[Chunking<br/>LangChain splitters]
+    S --> Q{Injection<br/>scan}
+    Q -- flagged --> X[Quarantine<br/>whole document]
+    Q -- clean --> E[Embeddings<br/>bge-small, local]
+    E --> DB[(pgvector)]
+    E --> M[Signed manifest<br/>SHA-256 + HMAC]
+```
+
+## How it works
+
+**Retrieval.** Documents are split by heading, then into chunks of about 900 characters with LangChain text splitters. Each chunk keeps its title and section. Search combines vector similarity (pgvector, HNSW index) with PostgreSQL full-text search and merges both rankings with reciprocal rank fusion. Exact terms such as "AC-2" or "SQL injection" are found by the keyword side, paraphrases by the vector side.
+
+**Access control.** Each document carries roles (`public`, `staff`, `security-admin`). The role filter is part of the SQL query, so filtering happens before ranking and before the LLM. In the demo, `user1` (staff) cannot retrieve the incident runbook, `user2` (security-admin) can.
+
+**Grounding.** The LLM receives the top 5 chunks as numbered sources and a system prompt that tells it to answer only from them, to cite them as `[S1]`, and to treat them as data, not instructions. The answer is then checked: citations to sources that do not exist are removed, an answer without any valid citation is refused, and an off-topic question is refused before the LLM is called when no chunk is similar enough.
+
+**Prompt injection.** Rules in English and French detect attempts to override instructions, change role, leak the system prompt or exfiltrate documents, including payloads hidden in base64 or in HTML comments. The demo contains a vendor note with a hidden instruction. It is quarantined at ingestion and never indexed.
+
+**Cloud mode (opt-in).** If a client accepts a hosted LLM, `SRAG_LLM_MODE=cloud` must be confirmed with `SRAG_ALLOW_CLOUD=true`. Emails, phone numbers, IBANs, card numbers and IP addresses are then replaced by placeholders such as `<EMAIL_1>` before sending, and restored locally in the answer. In local mode, the service refuses to start if the LLM address is not on the machine or the private network.
+
+## Run it
+
+Requirements: Docker, about 4 GB of free disk space and 8 GB of RAM.
+
+```bash
+git clone https://github.com/ahmedbmohamed/secure-rag-assistant.git
+cd secure-rag-assistant
+cp .env.example .env        # then change the two secrets
+make setup                  # build, download the model, index, create users (prints the API keys)
+make up                     # http://localhost:8501
+```
+
+`make setup` is the only step with internet access: it downloads the LLM once. The running services are on an internal network.
+
+Without Docker, for development:
+
+```bash
+pip install -r requirements-dev.txt && pip install -e .
+pytest                                  # 71 tests, pgvector tests need SRAG_TEST_DATABASE_URL
+ollama pull qwen2.5:3b                  # https://ollama.com
+python scripts/create_users.py          # prints the API keys
+uvicorn api.main:app                    # in-memory index when SRAG_DATABASE_URL is not set
+streamlit run ui/app.py
+```
+
+Ask with the API:
+
+```bash
+curl -X POST http://localhost:8000/ask -H "X-API-Key: $KEY" -H "Content-Type: application/json" \
+  -d '{"question": "How do I prevent SQL injection?"}'
+```
+
+## Deployment and recovery
+
+* Everything runs in containers, so the service can be redeployed on another server with the same `docker compose` commands.
+* The index is not a source of truth. It is rebuilt from the documents with `python -m srag.ingest.pipeline`. Back up the documents, the manifest and the secrets.
+* Containers run as a non-root user, with a read-only file system, no Linux capabilities and `no-new-privileges`.
+* For high availability, run two API instances behind a load balancer and a replicated PostgreSQL.
+
+## CI pipeline
+
+1. Lint and format checks (ruff)
+2. 71 tests, including access control and search on a real PostgreSQL with pgvector
+3. **Quality gate**: retrieval, refusal and injection detection must stay above the thresholds in `eval/gates.json`
+4. Docker build and **Trivy** scan (fails on fixable critical vulnerabilities)
+5. Smoke test of the container: authentication, an answer with sources, a blocked injection and the audit log
+
+A separate workflow runs the whole stack with the real local LLM, measures the answers and captures the screenshots.
+
+## Project structure
+
+```
+src/srag/
+  config.py        settings, local-only check of the LLM address
+  ingest/          loaders (OWASP, NIST OSCAL, internal), chunking, ingestion pipeline
+  embeddings.py    local embeddings (fastembed, ONNX)
+  store.py         hybrid search, pgvector and in-memory, role filter
+  guards/          prompt injection detection, PII masking
+  llm.py           LangChain chat models (Ollama, OpenAI-compatible), fail closed
+  rag.py           the question answering pipeline and the answer checks
+  integrity.py     signed manifest
+  auth.py          API keys, roles, rate limit
+  audit.py         JSON audit log
+api/main.py        REST API
+ui/app.py          web interface
+eval/              evaluation sets and scripts
+deploy/wazuh/      SIEM rules for the audit log
+```
+
+## Limitations
+
+* Prompt injection detection is rule based. It stops common attacks but not every new phrasing, which is why it is one layer among several.
+* PII masking covers structured data (emails, phones, IBAN, cards, IP), not personal names.
+* The embedding model is English. Questions in French work for the keyword part of the search but retrieval is weaker. A multilingual model would fix it at a higher cost.
+* A 3B model on CPU takes several seconds per answer. A GPU or a larger model improves speed and quality.
+
+## Data
+
+OWASP Top 10:2025 (CC BY 3.0), NIST SP 800-53 Rev. 5 (public domain) and fictional internal documents of an invented bank. Details in [data/SOURCES.md](data/SOURCES.md).
+
+## Author
+
+Ahmed Benmohamed, engineer in security of computer systems and networks (TEK-UP University, 2026).
+[LinkedIn](https://www.linkedin.com/in/ahmed-benmohamed-71b243309) · [GitHub](https://github.com/ahmedbmohamed)

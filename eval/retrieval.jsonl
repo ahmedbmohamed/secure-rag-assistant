@@ -1,0 +1,53 @@
+{"question": "What are the requirements for creating, disabling and reviewing user accounts?", "expected": ["nist-ac-2"]}
+{"question": "How should a system react after several failed login attempts?", "expected": ["nist-ac-7", "internal-demo-bank-security-policy"]}
+{"question": "Which principle limits users to the minimum access they need?", "expected": ["nist-ac-6", "internal-demo-bank-security-policy", "owasp-a01"]}
+{"question": "How should duties be split so one person cannot perform a critical task alone?", "expected": ["nist-ac-5"]}
+{"question": "What controls apply to remote access connections?", "expected": ["nist-ac-17"]}
+{"question": "When should a session be automatically terminated?", "expected": ["nist-ac-12", "nist-ac-11"]}
+{"question": "Which events should be logged by the system?", "expected": ["nist-au-2", "nist-au-12", "owasp-a09"]}
+{"question": "What information must an audit record contain?", "expected": ["nist-au-3"]}
+{"question": "How long should audit records be kept?", "expected": ["nist-au-11", "internal-demo-bank-security-policy"]}
+{"question": "How should audit logs be protected from modification?", "expected": ["nist-au-9"]}
+{"question": "Why do audit records need synchronized time stamps?", "expected": ["nist-au-8", "nist-sc-45"]}
+{"question": "What should a contingency plan include?", "expected": ["nist-cp-2"]}
+{"question": "How often should backups be performed and how should they be protected?", "expected": ["nist-cp-9"]}
+{"question": "How should a system be restored to a known state after a disruption?", "expected": ["nist-cp-10"]}
+{"question": "How should passwords and other authenticators be managed?", "expected": ["nist-ia-5", "owasp-a07"]}
+{"question": "When should users be asked to authenticate again?", "expected": ["nist-ia-11"]}
+{"question": "How should identity proofing be done before issuing credentials?", "expected": ["nist-ia-12"]}
+{"question": "What are the steps of incident handling?", "expected": ["nist-ir-4", "internal-demo-bank-incident-runbook"]}
+{"question": "Within what time must incidents be reported?", "expected": ["nist-ir-6", "internal-demo-bank-security-policy", "internal-demo-bank-incident-runbook"]}
+{"question": "What should an incident response plan contain?", "expected": ["nist-ir-8"]}
+{"question": "How should an organization respond to information spillage?", "expected": ["nist-ir-9"]}
+{"question": "How should vulnerability scanning be performed?", "expected": ["nist-ra-5", "internal-demo-bank-security-policy"]}
+{"question": "How should risk assessments be conducted and updated?", "expected": ["nist-ra-3"]}
+{"question": "What is threat hunting?", "expected": ["nist-ra-10"]}
+{"question": "How should the network boundary be protected?", "expected": ["nist-sc-7"]}
+{"question": "How should data be protected while it is transmitted?", "expected": ["nist-sc-8", "owasp-a04"]}
+{"question": "How should data be protected at rest?", "expected": ["nist-sc-28", "owasp-a04", "internal-demo-bank-security-policy"]}
+{"question": "How should cryptographic keys be managed?", "expected": ["nist-sc-12", "owasp-a04"]}
+{"question": "How can a system be protected against denial of service?", "expected": ["nist-sc-5"]}
+{"question": "How quickly should software flaws be remediated?", "expected": ["nist-si-2", "internal-demo-bank-security-policy"]}
+{"question": "What protections are needed against malicious code?", "expected": ["nist-si-3"]}
+{"question": "What should system monitoring detect?", "expected": ["nist-si-4"]}
+{"question": "How should input be validated?", "expected": ["nist-si-10", "owasp-a05"]}
+{"question": "How should error messages be handled so they do not reveal sensitive information?", "expected": ["nist-si-11", "owasp-a10"]}
+{"question": "How do I prevent SQL injection?", "expected": ["owasp-a05"]}
+{"question": "What is broken access control and how do I prevent it?", "expected": ["owasp-a01"]}
+{"question": "What are common security misconfigurations?", "expected": ["owasp-a02"]}
+{"question": "How do I protect my software supply chain and dependencies?", "expected": ["owasp-a03"]}
+{"question": "Which cryptographic mistakes lead to data exposure?", "expected": ["owasp-a04"]}
+{"question": "What is insecure design and how can threat modeling help?", "expected": ["owasp-a06"]}
+{"question": "How can credential stuffing and brute force attacks be prevented?", "expected": ["owasp-a07", "nist-ac-7"]}
+{"question": "How can software and data integrity failures such as unsigned updates be avoided?", "expected": ["owasp-a08", "nist-si-7"]}
+{"question": "Why are missing security logs and alerts a problem?", "expected": ["owasp-a09"]}
+{"question": "How should an application handle exceptional conditions safely?", "expected": ["owasp-a10"]}
+{"question": "How many classification levels does Demo Bank use?", "expected": ["internal-demo-bank-security-policy"]}
+{"question": "Is multi-factor authentication mandatory at Demo Bank?", "expected": ["internal-demo-bank-security-policy"]}
+{"question": "Can employees put restricted customer data into an external AI service?", "expected": ["internal-demo-bank-security-policy"]}
+{"question": "What is the minimum password length at Demo Bank?", "expected": ["internal-demo-bank-security-policy"]}
+{"question": "How should a compromised workstation be contained?", "expected": ["internal-demo-bank-incident-runbook"]}
+{"question": "When must a severity 1 incident be escalated to the CISO?", "expected": ["internal-demo-bank-incident-runbook"]}
+{"question": "What should we do in case of ransomware?", "expected": ["internal-demo-bank-incident-runbook"]}
+{"question": "Comment prévenir les injections SQL ?", "expected": ["owasp-a05"]}
+{"question": "Combien de temps faut-il conserver les journaux de sécurité ?", "expected": ["nist-au-11", "internal-demo-bank-security-policy"]}

@@ -1,0 +1,54 @@
+<!-- Wazuh rules for the Secure RAG Assistant audit log.
+     Collect the log with a <localfile> block (log_format json) pointing to logs/audit.jsonl. -->
+<group name="secure_rag,">
+
+  <rule id="100500" level="0">
+    <decoded_as>json</decoded_as>
+    <field name="app">secure-rag</field>
+    <description>Secure RAG Assistant event</description>
+  </rule>
+
+  <rule id="100501" level="5">
+    <if_sid>100500</if_sid>
+    <field name="event">auth_failed</field>
+    <description>Secure RAG: failed authentication from $(client_ip)</description>
+  </rule>
+
+  <rule id="100502" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100501</if_matched_sid>
+    <same_field>client_ip</same_field>
+    <description>Secure RAG: possible API key brute force from $(client_ip)</description>
+    <mitre><id>T1110</id></mitre>
+  </rule>
+
+  <rule id="100503" level="6">
+    <if_sid>100500</if_sid>
+    <field name="event">blocked_injection</field>
+    <description>Secure RAG: prompt injection blocked for user $(user)</description>
+  </rule>
+
+  <rule id="100504" level="10" frequency="3" timeframe="300">
+    <if_matched_sid>100503</if_matched_sid>
+    <same_field>user</same_field>
+    <description>Secure RAG: repeated prompt injection attempts by $(user)</description>
+  </rule>
+
+  <rule id="100505" level="12">
+    <if_sid>100500</if_sid>
+    <field name="event">integrity_failed</field>
+    <description>Secure RAG: index or model integrity check failed, service stopped</description>
+  </rule>
+
+  <rule id="100506" level="7">
+    <if_sid>100500</if_sid>
+    <field name="event">llm_unavailable</field>
+    <description>Secure RAG: local LLM unavailable, requests refused (fail closed)</description>
+  </rule>
+
+  <rule id="100507" level="4">
+    <if_sid>100500</if_sid>
+    <field name="event">rate_limited</field>
+    <description>Secure RAG: rate limit reached by $(user)</description>
+  </rule>
+
+</group>

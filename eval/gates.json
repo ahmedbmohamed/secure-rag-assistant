@@ -1,0 +1,8 @@
+{
+ "hit_at_5": {"min": 0.85},
+ "mrr_at_5": {"min": 0.7},
+ "out_of_scope_rejection": {"min": 0.8},
+ "in_scope_false_rejection": {"max": 0.05},
+ "injection_precision": {"min": 0.95},
+ "injection_recall": {"min": 0.9}
+}

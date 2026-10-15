@@ -1,0 +1,9 @@
+# Data sources and licenses
+
+| Folder | Content | License |
+|---|---|---|
+| `owasp/` | OWASP Top 10:2025, English pages A01 to A10, from [github.com/OWASP/Top10](https://github.com/OWASP/Top10) | Creative Commons Attribution 3.0, © OWASP Top 10 Team |
+| `nist/` | NIST SP 800-53 Revision 5 base controls of the AC, AU, CP, IA, IR, RA, SC and SI families, extracted from the official OSCAL catalog ([github.com/usnistgov/oscal-content](https://github.com/usnistgov/oscal-content)) | Public domain (work of the US government) |
+| `internal/` | Fictional documents of an invented bank, written for this demo. All names, numbers and addresses are invented. `vendor-integration-note.md` contains a planted prompt injection on purpose. | MIT, like the code |
+
+ISO/IEC 27001 is not included because its text is copyrighted. A licensed copy can be added to `internal/` with the right roles.

@@ -1,0 +1,67 @@
+name: End-to-end with a local LLM
+
+# Runs the full stack with a real model (Ollama, qwen2.5:3b on CPU) and the real embeddings,
+# measures the answers and captures the README screenshots. Started by hand: it takes a while.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 10
+    env:
+      SRAG_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      SRAG_OLLAMA_URL: http://127.0.0.1:11434
+      SRAG_OLLAMA_MODEL: qwen2.5:3b
+      SRAG_EMBED_CACHE_DIR: ${{ github.workspace }}/.models
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt && pip install -e . && pip install playwright
+      - run: python -m playwright install --with-deps chromium
+      - name: Install Ollama and pull the model
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          for i in $(seq 1 20); do curl -sf http://127.0.0.1:11434 && break; sleep 2; done
+          ollama pull qwen2.5:3b
+      - name: Index and create users
+        run: |
+          python -m srag.ingest.pipeline
+          python scripts/create_users.py > keys.txt
+          echo "SRAG_KEY_USER1=$(grep '^user1' keys.txt | awk '{print $NF}')" >> $GITHUB_ENV
+          echo "SRAG_KEY_USER2=$(grep '^user2' keys.txt | awk '{print $NF}')" >> $GITHUB_ENV
+          rm keys.txt
+      - name: Start API and web interface
+        run: |
+          nohup uvicorn api.main:app --port 8000 > api.log 2>&1 &
+          SRAG_API_URL=http://localhost:8000 nohup streamlit run ui/app.py --server.port 8501 > ui.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf localhost:8000/health && break; sleep 2; done
+          curl -s -X POST localhost:8000/ask -H "X-API-Key: $SRAG_KEY_USER1" -H 'Content-Type: application/json' \
+            -d '{"question":"What is least privilege?"}' > /dev/null  # warm up the model
+      - name: Evaluate the answers
+        run: python eval/run_e2e.py --questions 20
+      - name: Screenshots
+        run: python scripts/screenshots.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results
+          path: |
+            reports/e2e.json
+            docs/*.png
+            api.log
+            logs/audit.jsonl

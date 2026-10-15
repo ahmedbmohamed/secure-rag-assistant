@@ -1,0 +1,90 @@
+# Two networks:
+#   backend  internal, no route to the internet: database, LLM and API
+#   frontend the web interface and the API
+# The LLM container can only be reached by the API and cannot send anything out.
+
+x-app: &app
+  build: .
+  image: secure-rag-assistant:latest
+  env_file: .env
+  environment:
+    SRAG_DATABASE_URL: postgresql://srag:${POSTGRES_PASSWORD}@db:5432/srag
+    SRAG_OLLAMA_URL: http://ollama:11434
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: srag
+      POSTGRES_DB: srag
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U srag -d srag"]
+      interval: 5s
+      retries: 10
+
+  ollama:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
+    volumes: [ollama:/root/.ollama]
+    networks: [backend]
+
+  # One-off: download the model. The only service with internet access, run by `make setup`.
+  ollama-pull:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
+    profiles: [setup]
+    volumes: [ollama:/root/.ollama]
+    networks: [egress]
+    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 3 && ollama pull ${SRAG_OLLAMA_MODEL:-qwen2.5:3b}"]
+
+  ingest:
+    <<: *app
+    profiles: [setup]
+    command: ["python", "-m", "srag.ingest.pipeline"]
+    volumes: [./index:/app/index]
+    networks: [backend]
+    depends_on:
+      db: {condition: service_healthy}
+
+  users:
+    <<: *app
+    profiles: [setup]
+    command: ["python", "scripts/create_users.py"]
+    volumes: [./config:/app/config]
+    networks: [backend]
+
+  api:
+    <<: *app
+    volumes:
+      - ./index:/app/index:ro
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
+    networks: [backend, frontend]
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+      ollama: {condition: service_started}
+
+  ui:
+    <<: *app
+    command: ["streamlit", "run", "ui/app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+    environment:
+      SRAG_API_URL: http://api:8000
+    networks: [frontend]
+    ports: ["127.0.0.1:8501:8501"]
+    depends_on: [api]
+
+networks:
+  backend:
+    internal: true
+  frontend: {}
+  egress: {}
+
+volumes:
+  pgdata: {}
+  ollama: {}
