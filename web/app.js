@@ -131,8 +131,14 @@ async function loadHealth() {
     badge.textContent = "API unreachable";
     return;
   }
-  badge.className = "badge " + (data.mode === "local" ? "local" : "cloud");
-  badge.textContent = data.mode === "local" ? "Local mode: data stays on this machine" : "Cloud mode: personal data masked";
+  if (data.llm === "down") {
+    // Fail closed: say so plainly instead of showing the green "local mode" badge.
+    badge.className = "badge down";
+    badge.textContent = "LLM unavailable: questions are refused, nothing is sent elsewhere";
+  } else {
+    badge.className = "badge " + (data.mode === "local" ? "local" : "cloud");
+    badge.textContent = data.mode === "local" ? "Local mode: data stays on this machine" : "Cloud mode: personal data masked";
+  }
   $("fact-model").textContent = data.model;
   $("fact-index").textContent = `${data.documents} docs, ${data.chunks} chunks`;
   const integrity = $("fact-integrity");
@@ -327,6 +333,7 @@ async function ask(question) {
   }
   addAnswer(pending, result);
   updateStats(result);
+  loadHealth(); // the status badge follows the LLM going down or coming back
   $("ask-button").disabled = false;
   $("chat").lastElementChild.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -453,6 +460,6 @@ document.addEventListener("DOMContentLoaded", () => {
     box.style.height = "auto";
     box.style.height = Math.min(box.scrollHeight, 160) + "px";
   });
-  setInterval(() => state.user && loadHealth(), 30000);
+  setInterval(() => state.user && loadHealth(), 10000);
   enterApp(); // an existing session (cookie) goes straight to the assistant
 });

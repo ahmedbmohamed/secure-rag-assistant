@@ -62,6 +62,8 @@ flowchart LR
 
 **Grounding.** The LLM receives the top 5 chunks as numbered sources and a system prompt that tells it to answer only from them, to cite them as `[S1]`, and to treat them as data, not instructions. The answer is then checked: citations to sources that do not exist are removed, an answer without any valid citation is refused, and an off-topic question is refused before the LLM is called when no chunk is similar enough.
 
+**Keyword searches and dates.** People type keywords ("Backup RPO / RTO") as often as questions. The search uses the text as typed, and only the wording sent to the LLM becomes "Summarize what the sources say about: ...", because small models tend to answer "not found" to bare keywords. The LLM has no clock, so today's date is given with the sources and every date in them is marked "(already passed)" or "(still to come)" in code: comparing dates is exact in Python and unreliable in a 3B model. The status badge in the web page turns red when the LLM stops answering.
+
 **Prompt injection.** Rules in English and French detect attempts to override instructions, change role, leak the system prompt or exfiltrate documents, including payloads hidden in base64 or in HTML comments. The demo contains a vendor note with a hidden instruction. It is quarantined at ingestion and never indexed.
 
 **Accounts and sign-in.** People sign in with a password (PBKDF2-SHA256, 600,000 iterations, 14 characters minimum) and a TOTP code from Google or Microsoft Authenticator, set up by scanning a QR code at the first sign-in. The session lives in an `HttpOnly`, `Secure`, `SameSite=Strict` cookie that JavaScript cannot read, expires after 30 minutes of inactivity or 8 hours, and gets a new token after sign-in. Five failed attempts lock the account for 15 minutes, and an address with 20 failures is blocked, for passwords and API keys alike. Each code works once. The `admin` role manages accounts (create, disable, unlock, reset MFA, change roles) but reads no documents: administration and data access are separate. Scripts use service accounts with an API key and cannot sign in to the web page.
@@ -107,6 +109,17 @@ End-to-end, with the local LLM (`qwen2.5:3b` on a 4-core CPU, no GPU), on 20 que
 | Median time per answer | **19 s** |
 
 The unanswered question was asked in French, which the English embedding model handles poorly (see Limitations).
+
+Keyword searches and dates, measured with the same model on the whole pipeline before and after the change:
+
+| Check | Before | After |
+|---|---|---|
+| Keyword searches answered (15, such as "access reviews") | 10 of 15 | **14 of 15** |
+| Off-topic keyword searches refused before the LLM ("pizza recipe") | 5 of 5 | **5 of 5** |
+| Overdue vendor reviews named correctly, 3 phrasings | 1 of 12 tries with only today's date given | **2 of 3** with dates marked |
+| Regular questions answered, same 15 questions through both versions | 14 of 15 | **14 of 15** |
+
+A first attempt that searched with a sentence around the keywords answered more of them but let off-topic searches through the relevance check, so it was dropped (kept as the `sentence` line in `reports/eval.json`). The yes/no question "Is any vendor review overdue?" is still refused.
 
 Full results: [reports/eval.json](reports/eval.json) and [reports/e2e.json](reports/e2e.json).
 
@@ -208,6 +221,7 @@ deploy/wazuh/      SIEM rules for the audit log
 * Prompt injection detection is rule based. It stops common attacks but not every new phrasing, which is why it is one layer among several.
 * PII masking covers structured data (emails, phones, IBAN, cards, IP), not personal names.
 * The embedding model is English. Questions in French work for the keyword part of the search but retrieval is weaker. A multilingual model would fix it at a higher cost.
+* A 3B model reasons poorly on its own. Dates are compared in code for this reason, but a yes/no question such as "Is any vendor review overdue?" can still be refused.
 * A 3B model on CPU takes several seconds per answer. A GPU or a larger model improves speed and quality.
 
 ## Data

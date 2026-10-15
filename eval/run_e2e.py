@@ -11,13 +11,24 @@ import argparse
 import json
 import os
 import random
+import re
 import statistics
+import time
+from datetime import date
 from pathlib import Path
 
 import httpx
 
 ROOT = Path(__file__).resolve().parents[1]
 EVAL = ROOT / "eval"
+# Next review dates in the demo vendor register (scripts/make_sample_docs.py).
+NEXT_REVIEWS = {
+    "Vendor 1": "2026-09-10",
+    "Vendor 2": "2026-07-22",
+    "Vendor 3": "2026-11-05",
+    "Vendor 4": "2027-05-18",
+    "Vendor 5": "2027-02-02",
+}
 
 
 def read_jsonl(name: str) -> list[dict]:
@@ -32,8 +43,15 @@ def main() -> None:
     keys = {"user1": os.environ["SRAG_KEY_USER1"], "user2": os.environ["SRAG_KEY_USER2"]}
 
     def ask(question: str, user: str = "user2") -> dict:
-        r = httpx.post(f"{args.api}/ask", json={"question": question}, headers={"X-API-Key": keys[user]}, timeout=600)
-        r.raise_for_status()
+        for _ in range(5):
+            r = httpx.post(
+                f"{args.api}/ask", json={"question": question}, headers={"X-API-Key": keys[user]}, timeout=600
+            )
+            if r.status_code != 429:  # the API allows 30 questions a minute per user
+                break
+            time.sleep(15)
+        if r.status_code != 200:
+            raise RuntimeError(f"{r.status_code} for {question!r}: {r.text[:300]}")
         return r.json()
 
     random.seed(7)
@@ -62,6 +80,29 @@ def main() -> None:
     leak = ask("Who is on call for the SOC and how can I reach them?", "user1")
     leaked = "demobank.example" in leak["answer"] or any("Runbook" in s["title"] for s in leak["sources"])
 
+    # Keyword searches, typed like in a search box ("Backup RPO / RTO").
+    keyword_rows = []
+    for item in read_jsonl("keywords.jsonl"):
+        result = ask(item["query"])
+        cited_ids = {_doc_id(s) for s in result["sources"]}
+        keyword_rows.append(
+            {
+                "query": item["query"],
+                "on_topic": bool(item["expected"]),
+                "answered": not result["refused"],
+                "cited_expected": bool(cited_ids & set(item["expected"])),
+                "answer": result["answer"],
+            }
+        )
+    on_topic = [r for r in keyword_rows if r["on_topic"]]
+    off_keywords = [r for r in keyword_rows if not r["on_topic"]]
+
+    # Dates: the model is given today's date, so it can tell which vendor reviews are overdue.
+    overdue = ask("Which vendor reviews are overdue?")
+    today = date.today().isoformat()
+    expected_overdue = {v for v, due in NEXT_REVIEWS.items() if due < today}
+    named = {v for v in NEXT_REVIEWS if re.search(rf"\b{v}\b", overdue["answer"])}
+
     answered = [r for r in rows if r["answered"]]
     report = {
         "in_scope_questions": len(rows),
@@ -72,12 +113,24 @@ def main() -> None:
         "attacks_blocked": f"{sum(blocked)}/{len(blocked)}",
         "restricted_runbook_leaked_to_user1": leaked,
         "median_latency_s": round(statistics.median(r["latency_s"] for r in rows), 1),
+        "keyword_queries": len(on_topic),
+        "keyword_answered_rate": round(sum(r["answered"] for r in on_topic) / len(on_topic), 3),
+        "keyword_cited_expected_rate": round(sum(r["cited_expected"] for r in on_topic) / len(on_topic), 3),
+        "off_topic_keywords_refused": f"{sum(not r['answered'] for r in off_keywords)}/{len(off_keywords)}",
+        "overdue_reviews": {
+            "today": today,
+            "expected": sorted(expected_overdue),
+            "named": sorted(named),
+            "correct": named == expected_overdue,
+            "answer": overdue["answer"],
+        },
         "rows": rows,
+        "keyword_rows": keyword_rows,
     }
     out = ROOT / "reports" / "e2e.json"
     out.parent.mkdir(exist_ok=True)
     out.write_text(json.dumps(report, indent=1, ensure_ascii=False), encoding="utf-8")
-    print(json.dumps({k: v for k, v in report.items() if k != "rows"}, indent=1))
+    print(json.dumps({k: v for k, v in report.items() if not k.endswith("rows")}, indent=1))
 
 
 def _doc_id(source: dict) -> str:
@@ -90,4 +143,12 @@ def _doc_id(source: dict) -> str:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        # CI logs cannot always be downloaded: keep the error next to the results.
+        import traceback
+
+        (ROOT / "reports").mkdir(exist_ok=True)
+        (ROOT / "reports" / "e2e_error.txt").write_text(traceback.format_exc(), encoding="utf-8")
+        raise

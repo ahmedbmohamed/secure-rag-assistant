@@ -57,7 +57,7 @@ button, input, textarea { font: inherit; }
 #signin-form input:focus, #docs-filter:focus { outline: 2px solid #3b82c4; border-color: transparent; }
 #signin-form button, #signout { width: 100%; padding: 9px; border-radius: 8px; border: 0; background: #3b82c4; color: #fff; font-weight: 600; cursor: pointer; }
 #signout.ghost { background: transparent; border: 1px solid #2c4366; color: #cfe0f5; margin-top: 12px; font-weight: 500; }
-.error { color: #fca5a5; font-size: 13px; margin: 0; }
+p.error { color: #fca5a5; font-size: 13px; margin: 0; }
 
 .user-row { display: flex; gap: 10px; align-items: center; }
 .avatar { width: 38px; height: 38px; border-radius: 50%; background: #3b82c4; color: #fff; display: grid; place-items: center; font-weight: 700; }
@@ -103,6 +103,7 @@ button, input, textarea { font: inherit; }
 .card.refused { border-left: 4px solid var(--warn); }
 .card.blocked { border-left: 4px solid var(--bad); }
 .card.error { border-left: 4px solid var(--bad); }
+.card.error .answer { color: var(--text); }
 .status-line { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ok); margin-bottom: 6px; }
 .card.refused .status-line { color: var(--warn); }
 .card.blocked .status-line, .card.error .status-line { color: var(--bad); }
@@ -165,7 +166,7 @@ button, input, textarea { font: inherit; }
 .auth-card code { font-family: var(--mono); font-size: 12px; background: var(--bg); padding: 2px 6px; border-radius: 4px; word-break: break-all; }
 #mfa-qr { display: block; margin: 10px auto; border: 1px solid var(--line); border-radius: 8px; padding: 6px; background: #fff; }
 .link-button { background: none; border: 0; color: var(--accent); margin-top: 10px; cursor: pointer; width: 100%; }
-.auth-card .error { color: var(--bad); margin-top: 12px; }
+.auth-card p.error { color: var(--bad); margin-top: 12px; }
 .auth-foot { font-size: 12px; color: var(--muted); margin: 18px 0 0; text-align: center; }
 
 /* ===== Tabs and views ===== */

@@ -81,3 +81,24 @@ def test_web_interface_is_served_with_security_headers(client):
 def test_api_responses_are_not_cached(client):
     r = client.post("/ask", json={"question": "How do I prevent SQL injection?"}, headers=auth())
     assert r.headers["cache-control"] == "no-store"
+
+
+def test_health_shows_when_the_llm_is_down(client, model, assistant):
+    assert client.get("/health").json()["llm"] == "up"
+    model.fail = True
+    client.post("/ask", json={"question": "How do I prevent SQL injection?"}, headers=auth())
+    assert client.get("/health").json()["llm"] == "down"
+    model.fail = False
+    client.post("/ask", json={"question": "How do I prevent SQL injection?"}, headers=auth())
+    assert client.get("/health").json()["llm"] == "up"
+
+
+def test_llm_status_uses_the_ping_when_there_is_one():
+    from srag.llm import ChatLLM
+    from tests.conftest import ScriptedChatModel
+
+    answers = [True, False]
+    llm = ChatLLM(ScriptedChatModel(prompts=[]), "scripted", "local", ping=lambda: answers.pop(0))
+    assert llm.available() is True
+    llm._checked = 0  # cache expired
+    assert llm.available() is False

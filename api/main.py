@@ -233,6 +233,7 @@ def create_app(
             "version": __version__,
             "mode": svc.assistant.mode,
             "model": svc.assistant.llm.name,
+            "llm": "up" if svc.assistant.llm.available() else "down",
             "documents": len(svc.assistant.store.doc_hashes()),
             "chunks": svc.assistant.store.count(),
             "integrity": svc.integrity_mode if svc.integrity.ok else "failed",
@@ -490,7 +491,10 @@ def create_app(
         # Fail closed: no fallback to another provider.
         return JSONResponse(
             status_code=503,
-            content={"detail": "The LLM is unavailable. The request was not sent to any other provider."},
+            content={
+                "detail": "The LLM is unavailable. The request was not sent to any other provider. "
+                "Try again once the model is running again."
+            },
         )
 
     return app

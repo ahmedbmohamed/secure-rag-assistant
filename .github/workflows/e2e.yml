@@ -67,9 +67,12 @@ jobs:
       - name: Screenshots
         run: python scripts/screenshots.py
       - name: Publish results to the e2e-results branch
+        if: always()
         run: |
           mkdir -p /tmp/out/reports /tmp/out/docs
-          cp reports/*.json /tmp/out/reports/ && cp docs/*.png /tmp/out/docs/
+          cp reports/*.json reports/*.txt /tmp/out/reports/ 2>/dev/null || true
+          cp docs/*.png /tmp/out/docs/ 2>/dev/null || true
+          tail -n 40 api.log | grep -v -i "key" > /tmp/out/reports/api_tail.txt || true
           cd /tmp/out
           git init -q -b e2e-results
           git config user.name "Ahmed Benmohamed"

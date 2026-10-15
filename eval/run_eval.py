@@ -63,6 +63,26 @@ def main() -> int:
     out_scores = [max((h.score for h in search(r["question"])), default=0.0) for r in read_jsonl("out_of_scope.jsonl")]
     threshold = settings.effective_min_score
 
+    # Keyword searches ("Backup RPO / RTO") are searched as typed. Empty "expected" means off topic.
+    # "sentence" keeps the measurement of the rejected idea of searching with a sentence around the keywords.
+    keyword_rows = {"typed": [], "sentence": []}
+    for row in read_jsonl("keywords.jsonl"):
+        sentence = f"What do the documents say about {row['query']}?"
+        for variant, query in (("typed", row["query"]), ("sentence", sentence)):
+            hits = search(query)
+            best = max((h.score for h in hits), default=0.0)
+            found = any(h.chunk.doc_id in row["expected"] for h in hits)
+            keyword_rows[variant].append((bool(row["expected"]), best >= threshold, found))
+
+    def keyword_metrics(rows):
+        on = [r for r in rows if r[0]]
+        off = [r for r in rows if not r[0]]
+        return {
+            "answered_with_expected_doc": round(float(np.mean([r[1] and r[2] for r in on])), 3),
+            "false_rejection": round(float(np.mean([not r[1] for r in on])), 3),
+            "off_topic_rejection": round(float(np.mean([not r[1] for r in off])), 3),
+        }
+
     labels, preds = [], []
     for row in read_jsonl("injection.jsonl"):
         labels.append(row["label"])
@@ -81,6 +101,7 @@ def main() -> int:
         "in_scope_false_rejection": round(float(np.mean([s < threshold for s in in_scores])), 3),
         "score_in_scope_min": round(float(min(in_scores)), 3),
         "score_out_of_scope_max": round(float(max(out_scores)), 3),
+        "keyword_queries": {v: keyword_metrics(r) for v, r in keyword_rows.items()},
         "injection_precision": round(tp / (tp + fp), 3) if tp + fp else 0.0,
         "injection_recall": round(tp / (tp + fn), 3) if tp + fn else 0.0,
         "retrieval_misses": misses,

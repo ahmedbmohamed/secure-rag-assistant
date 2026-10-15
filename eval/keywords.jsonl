@@ -1,0 +1,20 @@
+{"query": "Backup RPO / RTO", "expected": ["internal-demo-bank-backup-policy-pdf", "nist-cp-10", "nist-cp-2", "nist-cp-9"]}
+{"query": "access reviews", "expected": ["internal-demo-bank-access-review-procedure-docx", "nist-ac-2"]}
+{"query": "vendor risks", "expected": ["internal-demo-bank-vendor-risk-register-xlsx"]}
+{"query": "high risk vendors", "expected": ["internal-demo-bank-vendor-risk-register-xlsx"]}
+{"query": "SQL injection", "expected": ["owasp-a05", "nist-si-10"]}
+{"query": "account lockout", "expected": ["nist-ac-7", "internal-demo-bank-security-policy", "owasp-a07"]}
+{"query": "password length", "expected": ["internal-demo-bank-security-policy", "nist-ia-5", "owasp-a07"]}
+{"query": "MFA remote access", "expected": ["nist-ac-17", "internal-demo-bank-security-policy", "nist-ia-2", "owasp-a07"]}
+{"query": "least privilege", "expected": ["nist-ac-6", "owasp-a01", "internal-demo-bank-security-policy"]}
+{"query": "audit log retention", "expected": ["nist-au-11", "internal-demo-bank-security-policy"]}
+{"query": "encryption at rest", "expected": ["nist-sc-28", "owasp-a04", "internal-demo-bank-security-policy"]}
+{"query": "patching deadlines", "expected": ["nist-si-2", "internal-demo-bank-security-policy", "nist-ra-5"]}
+{"query": "incident reporting", "expected": ["nist-ir-6", "internal-demo-bank-security-policy", "internal-demo-bank-incident-runbook"]}
+{"query": "software supply chain", "expected": ["owasp-a03", "nist-sr-11", "nist-sa-12"]}
+{"query": "session timeout", "expected": ["nist-ac-12", "nist-ac-11", "owasp-a07"]}
+{"query": "pizza recipe", "expected": []}
+{"query": "football results", "expected": []}
+{"query": "cheap flights to Paris", "expected": []}
+{"query": "weather tomorrow", "expected": []}
+{"query": "best smartphone 2026", "expected": []}
