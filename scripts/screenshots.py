@@ -1,6 +1,6 @@
 """Capture the README screenshots from a running web interface (used by the e2e workflow).
 
-    SRAG_KEY_USER1=... SRAG_KEY_USER2=... python scripts/screenshots.py --ui http://localhost:8501
+SRAG_KEY_USER1=... SRAG_KEY_USER2=... python scripts/screenshots.py --ui http://localhost:8501
 """
 
 import argparse
