@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write  # only to publish the results to the e2e-results branch
 
 jobs:
   e2e:
@@ -52,10 +52,22 @@ jobs:
           for i in $(seq 1 60); do curl -sf localhost:8000/health && break; sleep 2; done
           curl -s -X POST localhost:8000/ask -H "X-API-Key: $SRAG_KEY_USER1" -H 'Content-Type: application/json' \
             -d '{"question":"What is least privilege?"}' > /dev/null  # warm up the model
+      - name: Offline evaluation with the real embeddings
+        run: python eval/run_eval.py --reindex
       - name: Evaluate the answers
         run: python eval/run_e2e.py --questions 20
       - name: Screenshots
         run: python scripts/screenshots.py
+      - name: Publish results to the e2e-results branch
+        run: |
+          mkdir -p /tmp/out/reports /tmp/out/docs
+          cp reports/*.json /tmp/out/reports/ && cp docs/*.png /tmp/out/docs/
+          cd /tmp/out
+          git init -q -b e2e-results
+          git config user.name "Ahmed Benmohamed"
+          git config user.email "166703502+ahmedbmohamed@users.noreply.github.com"
+          git add -A && git commit -q -m "End-to-end results"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" e2e-results
       - uses: actions/upload-artifact@v5
         if: always()
         with:
