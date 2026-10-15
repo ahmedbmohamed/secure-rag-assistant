@@ -45,10 +45,9 @@ jobs:
           echo "SRAG_KEY_USER1=$(grep '^user1' keys.txt | awk '{print $NF}')" >> $GITHUB_ENV
           echo "SRAG_KEY_USER2=$(grep '^user2' keys.txt | awk '{print $NF}')" >> $GITHUB_ENV
           rm keys.txt
-      - name: Start API and web interface
+      - name: Start the API and web interface
         run: |
           nohup uvicorn api.main:app --port 8000 > api.log 2>&1 &
-          SRAG_API_URL=http://localhost:8000 nohup streamlit run ui/app.py --server.port 8501 > ui.log 2>&1 &
           for i in $(seq 1 60); do curl -sf localhost:8000/health && break; sleep 2; done
           curl -s -X POST localhost:8000/ask -H "X-API-Key: $SRAG_KEY_USER1" -H 'Content-Type: application/json' \
             -d '{"question":"What is least privilege?"}' > /dev/null  # warm up the model

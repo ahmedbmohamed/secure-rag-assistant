@@ -1,12 +1,14 @@
-"""REST API: authentication, rate limit, question answering, health.
+"""REST API and web interface: authentication, rate limit, question answering, health.
 
 uvicorn api.main:app
 """
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from srag import __version__
@@ -16,6 +18,21 @@ from srag.config import get_settings
 from srag.llm import LLMUnavailable
 from srag.models import User
 from srag.service import Service, build_service
+
+WEB_DIR = Path(__file__).resolve().parents[1] / "web"
+
+# Strict browser policy for the web interface: only files served by this API, no inline scripts,
+# no framing. The interactive API docs (/docs) load their own assets and are left out of it.
+SECURITY_HEADERS = {
+    "Content-Security-Policy": (
+        "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
+        "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+    ),
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+}
 
 
 class AskRequest(BaseModel):
@@ -58,6 +75,19 @@ def create_app(
         yield
 
     app = FastAPI(title="Secure RAG Assistant", version=__version__, lifespan=lifespan)
+    app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
+
+    @app.middleware("http")
+    async def security_headers(request: Request, call_next):
+        response = await call_next(request)
+        if not request.url.path.startswith(("/docs", "/redoc", "/openapi.json")):
+            response.headers.update(SECURITY_HEADERS)
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    @app.get("/", include_in_schema=False)
+    def index():
+        return FileResponse(WEB_DIR / "index.html")
 
     def current_user(request: Request, x_api_key: str | None = Header(default=None)) -> User:
         user = state["users"].authenticate(x_api_key)

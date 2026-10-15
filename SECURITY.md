@@ -27,7 +27,8 @@ The assistant answers questions from documents that can be confidential. The des
 | T9 | Index or model tampered with | HMAC-signed manifest of every document hash, checked at startup. Optional pinned model digest checked against Ollama. The service refuses to start on any difference. | An attacker who also steals the manifest key can re-sign |
 | T10 | Brute force on API keys, API abuse | Keys compared in constant time, failed attempts logged with the client IP, per-user rate limit (30 requests per minute by default) | The limit is per process. Use a gateway for several replicas. |
 | T11 | Audit log becomes a leak itself | Questions are stored masked, with a SHA-256 of the original | The masked text can still be sensitive |
-| T12 | Vulnerable dependencies or image | Pinned dependencies, Trivy scan of the image in CI (fails on fixable critical issues) | New vulnerabilities appear after the scan |
+| T12 | Cross-site scripting through model output or document text | The web page inserts answers and excerpts with `textContent` only. Strict Content Security Policy (`script-src 'self'`, no inline script, `frame-ancestors 'none'`), `X-Content-Type-Options`, no caching of API responses. The API key stays in memory, not in browser storage. | A compromised API could still serve a malicious page |
+| T13 | Vulnerable dependencies or image | Pinned dependencies, Trivy scan of the image in CI (fails on fixable critical issues) | New vulnerabilities appear after the scan |
 
 ## Detection
 

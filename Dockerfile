@@ -20,8 +20,7 @@ COPY src ./src
 RUN pip install --no-deps .
 
 COPY api ./api
-COPY ui ./ui
-COPY .streamlit ./.streamlit
+COPY web ./web
 COPY data ./data
 COPY scripts ./scripts
 COPY eval ./eval
@@ -29,7 +28,7 @@ COPY eval ./eval
 RUN mkdir -p /app/logs /app/index /app/config && chown -R app:app /app/logs /app/index /app/config
 ENV HF_HUB_OFFLINE=1
 USER app
-EXPOSE 8000 8501
+EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')" || exit 1
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

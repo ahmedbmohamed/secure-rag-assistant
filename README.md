@@ -20,7 +20,7 @@ The threat model is in [SECURITY.md](SECURITY.md).
 
 ```mermaid
 flowchart LR
-    U[User] -->|API key| UI[Streamlit UI]
+    U[User] -->|API key| UI[Web interface<br/>HTML, CSS, JavaScript]
     UI --> API[FastAPI<br/>auth, rate limit]
     subgraph backend [Internal network, no internet access]
         API --> G1{Injection<br/>check}
@@ -61,6 +61,17 @@ flowchart LR
 **Prompt injection.** Rules in English and French detect attempts to override instructions, change role, leak the system prompt or exfiltrate documents, including payloads hidden in base64 or in HTML comments. The demo contains a vendor note with a hidden instruction. It is quarantined at ingestion and never indexed.
 
 **Cloud mode (opt-in).** If a client accepts a hosted LLM, `SRAG_LLM_MODE=cloud` must be confirmed with `SRAG_ALLOW_CLOUD=true`. Emails, phone numbers, IBANs, card numbers and IP addresses are then replaced by placeholders such as `<EMAIL_1>` before sending, and restored locally in the answer. In local mode, the service refuses to start if the LLM address is not on the machine or the private network.
+
+## Web interface
+
+A single page in plain HTML, CSS and JavaScript, served by the API itself (no framework, no build step, no external script).
+
+* Session dashboard: questions asked, answered with sources, refused, attacks blocked, average time
+* Answers with clickable citations: `[S1]` opens and highlights the matching source, with its similarity and a link to the original
+* The documents the signed-in user is allowed to search, with a filter
+* Mode badge (local or cloud), model name and index integrity status
+
+Because the model output and the document text are untrusted, the page never inserts them as HTML (only as text), and the API sends a strict Content Security Policy: scripts and styles only from the API itself, no inline scripts, no framing. The API key is kept in memory only, never in browser storage.
 
 ## Results
 
@@ -110,7 +121,7 @@ git clone https://github.com/ahmedbmohamed/secure-rag-assistant.git
 cd secure-rag-assistant
 cp .env.example .env        # then change the two secrets
 make setup                  # build, download the model, index, create users (prints the API keys)
-make up                     # http://localhost:8501
+make up                     # http://localhost:8000
 ```
 
 `make setup` is the only step with internet access: it downloads the LLM once. The running services are on an internal network.
@@ -119,11 +130,10 @@ Without Docker, for development:
 
 ```bash
 pip install -r requirements-dev.txt && pip install -e .
-pytest                                  # 76 tests, pgvector tests need SRAG_TEST_DATABASE_URL
+pytest                                  # 78 tests, pgvector tests need SRAG_TEST_DATABASE_URL
 ollama pull qwen2.5:3b                  # https://ollama.com
 python scripts/create_users.py          # prints the API keys
-uvicorn api.main:app                    # in-memory index when SRAG_DATABASE_URL is not set
-streamlit run ui/app.py
+uvicorn api.main:app                    # http://localhost:8000, in-memory index when SRAG_DATABASE_URL is not set
 ```
 
 Ask with the API:
@@ -143,7 +153,7 @@ curl -X POST http://localhost:8000/ask -H "X-API-Key: $KEY" -H "Content-Type: ap
 ## CI pipeline
 
 1. Lint and format checks (ruff)
-2. 76 tests, including access control and search on a real PostgreSQL with pgvector
+2. 78 tests, including access control and search on a real PostgreSQL with pgvector
 3. **Quality gate**: retrieval, refusal and injection detection must stay above the thresholds in `eval/gates.json`
 4. Docker build and **Trivy** scan (fails on fixable critical vulnerabilities)
 5. Smoke test of the container: authentication, an answer with sources, a blocked injection and the audit log
@@ -164,8 +174,8 @@ src/srag/
   integrity.py     signed manifest
   auth.py          API keys, roles, rate limit
   audit.py         JSON audit log
-api/main.py        REST API
-ui/app.py          web interface
+api/main.py        REST API, serves the web interface
+web/               web interface (plain HTML, CSS and JavaScript, no framework)
 eval/              evaluation sets and scripts
 deploy/wazuh/      SIEM rules for the audit log
 ```

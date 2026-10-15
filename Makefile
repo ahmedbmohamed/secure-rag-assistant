@@ -9,8 +9,8 @@ setup:  ## first run: build, download the model, index the documents, create the
 	docker compose --profile setup run --rm users
 
 up:
-	docker compose up -d api ui
-	@echo "Web interface: http://localhost:8501   API docs: http://localhost:8000/docs"
+	docker compose up -d api
+	@echo "Web interface: http://localhost:8000   API docs: http://localhost:8000/docs"
 
 down:
 	docker compose down

@@ -1,11 +1,10 @@
 """Capture the README screenshots from a running web interface (used by the e2e workflow).
 
-SRAG_KEY_USER1=... SRAG_KEY_USER2=... python scripts/screenshots.py --ui http://localhost:8501
+SRAG_KEY_USER1=... SRAG_KEY_USER2=... python scripts/screenshots.py --ui http://localhost:8000
 """
 
 import argparse
 import os
-import re
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -22,7 +21,7 @@ SCENES = [
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ui", default="http://localhost:8501")
+    parser.add_argument("--ui", default="http://localhost:8000")
     args = parser.parse_args()
     OUT.mkdir(exist_ok=True)
     with sync_playwright() as p:
@@ -30,18 +29,17 @@ def main() -> None:
         for filename, user, question in SCENES:
             page = browser.new_page(viewport={"width": 1400, "height": 1000}, device_scale_factor=1)
             page.goto(args.ui)
-            key_box = page.locator("input[aria-label='API key']")
-            key_box.fill(os.environ[f"SRAG_KEY_{user.upper()}"])
-            key_box.press("Enter")
-            page.get_by_text("You can search").wait_for(timeout=60_000)
-            page.get_by_placeholder("Ask about a control, a risk or a policy").fill(question)
+            page.locator("#api-key").fill(os.environ[f"SRAG_KEY_{user.upper()}"])
+            page.locator("#signin-form button").click()
+            page.locator("#docs-list li").first.wait_for(timeout=60_000)
+            page.locator("#question").fill(question)
             page.keyboard.press("Enter")
-            page.get_by_text(re.compile(r"\d+\.\d s · (local|cloud) mode")).wait_for(timeout=600_000)
-            page.wait_for_timeout(1500)
-            expanders = page.locator("[data-testid='stExpander'] summary")
-            if expanders.count():
-                expanders.first.click()
-                page.wait_for_timeout(800)
+            page.locator(".card .status-line").last.wait_for(timeout=600_000)
+            page.wait_for_timeout(800)
+            source = page.locator("details.source")
+            if source.count():
+                source.first.locator("summary").click()
+                page.wait_for_timeout(500)
             page.screenshot(path=str(OUT / filename), full_page=True)
             page.close()
             print("saved", filename)

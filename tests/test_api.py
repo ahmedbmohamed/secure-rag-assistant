@@ -65,3 +65,19 @@ def test_llm_outage_returns_503(client, model):
     r = client.post("/ask", json={"question": "How do I prevent SQL injection?"}, headers=auth())
     assert r.status_code == 503
     assert "not sent to any other provider" in r.json()["detail"]
+
+
+def test_web_interface_is_served_with_security_headers(client):
+    page = client.get("/")
+    assert page.status_code == 200 and "Secure RAG Assistant" in page.text
+    csp = page.headers["content-security-policy"]
+    assert "script-src 'self'" in csp and "frame-ancestors 'none'" in csp
+    assert page.headers["x-frame-options"] == "DENY"
+    script = client.get("/static/app.js")
+    assert script.status_code == 200 and "textContent" in script.text
+    assert "innerHTML" not in script.text.replace("never innerHTML", "")
+
+
+def test_api_responses_are_not_cached(client):
+    r = client.post("/ask", json={"question": "How do I prevent SQL injection?"}, headers=auth())
+    assert r.headers["cache-control"] == "no-store"

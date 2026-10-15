@@ -1,6 +1,6 @@
 # Two networks:
 #   backend  internal, no route to the internet: database, LLM and API
-#   frontend the web interface and the API
+#   frontend the API, which also serves the web interface
 # The LLM container can only be reached by the API and cannot send anything out.
 
 x-app: &app
@@ -69,15 +69,6 @@ services:
     depends_on:
       db: {condition: service_healthy}
       ollama: {condition: service_started}
-
-  ui:
-    <<: *app
-    command: ["streamlit", "run", "ui/app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
-    environment:
-      SRAG_API_URL: http://api:8000
-    networks: [frontend]
-    ports: ["127.0.0.1:8501:8501"]
-    depends_on: [api]
 
 networks:
   backend:
