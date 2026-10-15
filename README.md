@@ -91,14 +91,14 @@ End-to-end, with the local LLM (`qwen2.5:3b` on a 4-core CPU, no GPU), on 20 que
 
 | Check | Result |
 |---|---|
-| Questions answered with sources | **95%** (19 of 20) |
-| Answers citing an expected document | **90%** of questions, **94.7%** of the answered ones |
+| Questions answered with sources | **100%** (20 of 20) |
+| Answers citing an expected document | **95%** (19 of 20) |
 | Off-topic questions refused | **6 of 6** |
 | Injection attempts blocked | **6 of 6** |
 | Restricted runbook shown to a user without the role | **never** |
-| Median time per answer | **22 s** |
+| Median time per answer | **31 s** |
 
-Full results: [reports/eval.json](reports/eval.json) and [reports/e2e.json](reports/e2e.json). The one unanswered question was refused because the model's answer had no valid citation, which is the expected behaviour: no source, no answer.
+Full results: [reports/eval.json](reports/eval.json) and [reports/e2e.json](reports/e2e.json).
 
 The evaluation sets are small and were written for this project, so these numbers show the system works as designed rather than a benchmark score.
 
