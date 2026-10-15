@@ -128,11 +128,13 @@ def render(entry: dict) -> None:
                 st.markdown(f"[Open the source]({s['url']})")
 
 
-if not st.session_state.history:
+question = st.chat_input("Ask about a control, a risk or a policy") or st.session_state.pop("pending", None)
+if not st.session_state.history and not question:
     cols = st.columns(len(EXAMPLES))
     for col, example in zip(cols, EXAMPLES, strict=True):
         if col.button(example, use_container_width=True):
             st.session_state.pending = example
+            st.rerun()
 
 for entry in st.session_state.history:
     with st.chat_message("user"):
@@ -140,7 +142,6 @@ for entry in st.session_state.history:
     with st.chat_message("assistant"):
         render(entry)
 
-question = st.chat_input("Ask about a control, a risk or a policy") or st.session_state.pop("pending", None)
 if question:
     with st.chat_message("user"):
         st.markdown(question)

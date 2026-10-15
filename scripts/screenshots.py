@@ -5,6 +5,7 @@ SRAG_KEY_USER1=... SRAG_KEY_USER2=... python scripts/screenshots.py --ui http://
 
 import argparse
 import os
+import re
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -35,7 +36,7 @@ def main() -> None:
             page.get_by_text("You can search").wait_for(timeout=60_000)
             page.get_by_placeholder("Ask about a control, a risk or a policy").fill(question)
             page.keyboard.press("Enter")
-            page.get_by_text(" mode").last.wait_for(timeout=600_000)
+            page.get_by_text(re.compile(r"\d+\.\d s · (local|cloud) mode")).wait_for(timeout=600_000)
             page.wait_for_timeout(1500)
             expanders = page.locator("[data-testid='stExpander'] summary")
             if expanders.count():

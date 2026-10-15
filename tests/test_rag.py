@@ -2,7 +2,7 @@ import pytest
 
 from srag.config import Settings
 from srag.llm import ChatLLM, LLMUnavailable
-from srag.rag import Assistant
+from srag.rag import Assistant, normalize_citations
 from tests.conftest import USER1, USER2, ScriptedChatModel
 
 
@@ -27,6 +27,20 @@ def test_invented_citations_are_removed(assistant, model):
     answer = assistant.ask("How do I prevent SQL injection?", USER1)
     assert answer.text == "Use parameterized queries [S1]."
     assert [s.label for s in answer.sources] == ["S1"]
+
+
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        ("Use queries (S1).", "Use queries [S1]."),
+        ("Use queries [S1, S2].", "Use queries [S1][S2]."),
+        ("Use queries [S1-S2] and (S3; S4).", "Use queries [S1][S2] and [S3][S4]."),
+        ("Use queries [S1][S2].", "Use queries [S1][S2]."),
+        ("Section (see page 2) stays.", "Section (see page 2) stays."),
+    ],
+)
+def test_loose_citations_are_normalized(raw, expected):
+    assert normalize_citations(raw) == expected
 
 
 def test_answer_without_citation_is_refused(assistant, model):
