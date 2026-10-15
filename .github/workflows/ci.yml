@@ -73,6 +73,12 @@ jobs:
       - name: Smoke test with pgvector and a stand-in LLM
         run: |
           set -e
+          report() {
+            # Make the failure readable from the run summary: the failed command and the API logs.
+            logs=$(docker logs api 2>&1 | tail -25 | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g')
+            echo "::error title=Smoke test failed::$1%0A$logs"
+          }
+          trap 'report "$BASH_COMMAND"' ERR
           docker run -d --name db -e POSTGRES_PASSWORD=pw -p 5432:5432 pgvector/pgvector:pg16
           python scripts/fake_ollama.py 11434 &
           for i in $(seq 1 30); do docker exec db pg_isready -U postgres && break; sleep 2; done
