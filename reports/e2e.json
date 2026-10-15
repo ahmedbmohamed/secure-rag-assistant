@@ -1,0 +1,234 @@
+{
+ "in_scope_questions": 20,
+ "answered_rate": 0.95,
+ "cited_expected_rate": 0.9,
+ "cited_expected_when_answered": 0.947,
+ "off_topic_refusal_rate": 1.0,
+ "attacks_blocked": "6/6",
+ "restricted_runbook_leaked_to_user1": false,
+ "median_latency_s": 22.4,
+ "rows": [
+  {
+   "question": "How should an organization respond to information spillage?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "nist:IR-9"
+   ],
+   "latency_s": 22.998,
+   "answer": "An organization should respond to information spillage by assigning personnel or roles with responsibility for responding to information spills, identifying the specific information involved in the system contamination, alerting personnel of the information spill using a method of communication not associated with the spill, isolating the contaminated system or system component, eradicating the information from the contaminated system or component, identifying other systems or system components that may have been subsequently contaminated, and performing the following additional actions: [actions]. This response is based on the control statement provided in [S3]. [S3]"
+  },
+  {
+   "question": "How should audit logs be protected from modification?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "nist:AU-9"
+   ],
+   "latency_s": 16.723,
+   "answer": "Audit logs should be protected from unauthorized access, modification, and deletion as per [S3]. Specifically, it states that audit information and audit logging tools should be protected from unauthorized access, modification, and deletion. Additionally, alerting personnel or roles upon detection of such unauthorized activities is also required."
+  },
+  {
+   "question": "How should data be protected while it is transmitted?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "owasp:A04:2025"
+   ],
+   "latency_s": 28.265,
+   "answer": "Data should be protected while transmitted by ensuring up-to-date and strong standard algorithms, protocols, and keys are in place; use proper key management. Additionally, encrypt all data in transit with protocols >= TLS 1.2 only, with forward secrecy (FS) ciphers, drop support for cipher block chaining (CBC) ciphers, and support quantum key change algorithms [S4]. For HTTPS, enforce encryption using HTTP Strict Transport Security (HSTS) [S4]. Disable caching for responses that contain sensitive data [S4]. Apply required security controls as per the data classification [S4]. Do not use unencrypted protocols such as FTP and STARTTLS [S4]."
+  },
+  {
+   "question": "How can software and data integrity failures such as unsigned updates be avoided?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "owasp:A08:2025"
+   ],
+   "latency_s": 30.682,
+   "answer": "To avoid software and data integrity failures such as unsigned updates, one can ensure that unsigned or unencrypted serialized data is not received from untrusted clients and subsequently used without some form of integrity check or digital signature to detect tampering or replay of the serialized data [S3]. Additionally, digital signatures or similar mechanisms should be used to verify that the software or data is from the expected source and has not been altered [S5]. Libraries and dependencies should be consumed from trusted repositories, and a review process for code and configuration changes should be implemented to minimize the chance of malicious code or configuration being introduced into the software pipeline [S5]. Lastly, a CI/CD pipeline should have proper segregation, configuration, and access control to ensure the integrity of the code flowing through the build and deploy processes [S5]."
+  },
+  {
+   "question": "How should duties be split so one person cannot perform a critical task alone?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "nist:AC-5"
+   ],
+   "latency_s": 25.499,
+   "answer": "[NIST SP 800-53 AC-5 Separation of Duties | Control statement] Organizations should identify and document the duties of individuals and define system access authorizations to support separation of duties. [S1] discusses that separation of duties involves dividing mission or business functions and support functions among different individuals or roles, conducting system support functions with different individuals, and ensuring that security personnel who administer access control functions do not also administer audit functions. This separation is enforced through account management, access control mechanisms, and identity management activities. Therefore, to split duties so one person cannot perform a critical task alone, organizations should identify and document the specific duties and then define system access authorizations to support separation of duties."
+  },
+  {
+   "question": "What controls apply to remote access connections?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "nist:AC-17"
+   ],
+   "latency_s": 21.763,
+   "answer": "Controls related to remote access connections include establishing and documenting usage restrictions, configuration/connection requirements, and implementation guidance for each type of remote access allowed [S3]. Additionally, authorization of each type of remote access to the system prior to allowing such connections is addressed [S3]. [S1] and [S2] provide further details on the use of encrypted virtual private networks (VPNs) for remote access, emphasizing the need for authorization and the potential limitations of remote access in terms of monitoring and availability."
+  },
+  {
+   "question": "How do I prevent SQL injection?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "owasp:A05:2025"
+   ],
+   "latency_s": 21.828,
+   "answer": "To prevent SQL injection, you should use a safe API that avoids using the interpreter entirely, provides a parameterized interface, or migrates to Object Relational Mapping Tools (ORMs) [S1]. When it is not possible to separate the data from commands, you can reduce threats using positive server-side input validation and escaping special characters using the specific escape syntax for that interpreter [S1][S2]."
+  },
+  {
+   "question": "Which events should be logged by the system?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "nist:AU-2"
+   ],
+   "latency_s": 28.208,
+   "answer": "The system should log the following types of events as per [S1] and [S2]:\n\n- Password changes\n- Failed logons or failed accesses related to systems, security, or privacy attributes\n- Administrative privilege usage\n- PIV credential usage\n- Data action changes\n- Query parameters\n- External credential usage\n\nThese events are significant and relevant to the security of the system and the privacy of individuals. Organizations should also consider privacy risks and mitigate them by reviewing and updating the set of logged events. [S2] emphasizes the importance of balancing monitoring and auditing requirements with other system needs, suggesting that organizations may choose to log specific events only under certain circumstances to avoid burdening system performance."
+  },
+  {
+   "question": "What is threat hunting?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "nist:RA-10"
+   ],
+   "latency_s": 21.119,
+   "answer": "Threat hunting is an active means of cyber defense, contrasting with traditional protection measures like firewalls, intrusion detection and prevention systems, quarantining malicious code in sandboxes, and Security Information and Event Management technologies and systems. It involves proactively searching organizational systems, networks, and infrastructure for advanced threats. The objective is to track and disrupt cyber adversaries as early as possible in the attack sequence and to measurably improve the speed and accuracy of organizational responses. Indications of compromise include unusual network traffic, unusual file changes, and the presence of malicious code [S1]."
+  },
+  {
+   "question": "How do I protect my software supply chain and dependencies?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "owasp:A03:2025"
+   ],
+   "latency_s": 44.635,
+   "answer": "To protect your software supply chain and dependencies, you should:\n\n- Continuously monitor for vulnerabilities in the components you use, using tools like CVE, NVD, and OSV. Automate this process with software composition analysis, software supply chain, or security-focused SBOM tools. Subscribe to alerts for security vulnerabilities related to components you use [S1][S3].\n- Obtain components only from official (trusted) sources over secure links. Prefer signed packages to reduce the chance of including a modified, malicious component [S1][S3].\n- Deliberately choose which version of a dependency you use and upgrade only when there is need [S3][S5].\n- Monitor for libraries and components that are unmaintained or do not create security patches for older versions. If patching is not possible, consider migrating to an alternative or deploying a virtual patch to monitor, detect, or protect against the discovered issue [S5].\n- Update your CI/CD, IDE, and other developer tooling regularly [S5].\n- Avoid deploying updates to all systems simultaneously. Use staged rollouts or canary deployments to limit exposure in case a trusted vendor is compromised [S4][S5].\n- Implement a change management process or tracking system to track changes to CI/CD settings, code repositories, sandbox areas, developer IDEs, SBOM tooling, and created artifacts [S4][S5]."
+  },
+  {
+   "question": "How should a compromised workstation be contained?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "internal:demo-bank-incident-runbook.md"
+   ],
+   "latency_s": 24.426,
+   "answer": "Containment of a compromised workstation should follow these steps as outlined in [S1]:\n\n1. Isolate the workstation from the network through the EDR console, without powering it off, to keep memory evidence.\n2. Disable the user account in Active Directory and revoke active sessions and tokens.\n3. Collect a memory image and the EDR timeline before any cleanup.\n4. Block the indicators of compromise (IP addresses, domains, file hashes) on the firewall and the EDR.\n5. Reimage the workstation only after the investigation team approves.\n\nThese steps are designed to prevent further spread of the compromised workstation and to preserve evidence for investigation. [S1]"
+  },
+  {
+   "question": "How should input be validated?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "nist:SI-10"
+   ],
+   "latency_s": 19.141,
+   "answer": "Input should be validated to ensure it matches specified definitions for format and content. This involves checking the valid syntax and semantics of system inputs, including character set, length, numerical range, and acceptable values. For example, if an application specifies that numerical values between 1-100 are acceptable, inputs like \"387,\" \"abc,\" or \"%K%\" would be considered invalid and not accepted. This validation is crucial to prevent attacks such as cross-site scripting and injection attacks. [S1][S2]"
+  },
+  {
+   "question": "How should a system be restored to a known state after a disruption?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "nist:CP-10",
+    "nist:CP-2",
+    "nist:SC-24"
+   ],
+   "latency_s": 24.088,
+   "answer": "A system should be restored to a known state after a disruption by executing contingency plan activities as described in [S2][S4]. Specifically, following a disruption, recovery operations should be carried out to restore organizational mission and business functions, as outlined in [S2]. This includes activities to return systems to fully operational states, which is part of the reconstitution process detailed in [S2][S3]. The known state for restoration is preserved by maintaining [S1] system state information, ensuring that the system can return to its operational mode with less disruption to mission and business processes. [S5] specifies that the recovery and reconstitution of the system should be completed within a defined time period consistent with recovery time and recovery point objectives."
+  },
+  {
+   "question": "Which principle limits users to the minimum access they need?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "nist:AC-6"
+   ],
+   "latency_s": 14.502,
+   "answer": "[S4] NIST SP 800-53 AC-6 Least Privilege states that the principle of least privilege should be employed, allowing only authorized accesses for users (or processes acting on behalf of users) that are necessary to accomplish assigned organizational tasks."
+  },
+  {
+   "question": "When should a session be automatically terminated?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "nist:AC-12"
+   ],
+   "latency_s": 13.988,
+   "answer": "A session should be automatically terminated based on conditions or trigger events as discussed in [S3]. These conditions include organization-defined periods of user inactivity, targeted responses to certain types of incidents, or time-of-day restrictions on system use. [S2] provides a control statement suggesting that automatic termination should occur after specified conditions or trigger events."
+  },
+  {
+   "question": "How should cryptographic keys be managed?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "nist:SC-12"
+   ],
+   "latency_s": 23.823,
+   "answer": "Cryptographic keys should be managed according to the key management requirements specified in NIST SP 800-53 SC-12. This includes establishing and managing cryptographic keys within the system in accordance with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines. Organizations should define key management requirements and specify appropriate options, parameters, and levels. Additionally, organizations should manage trust stores to ensure only approved trust anchors are part of these trust stores, including certificates with visibility external to organizational systems and certificates related to internal operations of systems [S1]."
+  },
+  {
+   "question": "How should data be protected at rest?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "nist:SC-28",
+    "owasp:A04:2025"
+   ],
+   "latency_s": 30.317,
+   "answer": "Data at rest should be protected by implementing cryptographic mechanisms to ensure confidentiality and integrity [S1]. Organizations may also use write-once-read-many (WORM) technologies for integrity protection [S2]. Additionally, it is important to classify and label data processed, stored, or transmitted by an application, and to store sensitive keys in hardware or cloud-based HSMs [S3]. Ensuring up-to-date and strong standard algorithms, protocols, and keys are in place, and using proper key management are also crucial [S3]. Furthermore, sensitive data should be encrypted at rest [S3]. It is important to identify what data needs encryption at rest and what data needs extra encryption in transit, especially for data that falls under privacy laws or regulations [S4]. Finally, regular checks should be performed to ensure the use of strong cryptographic algorithms, protocols, and keys, and to prevent the use of weak or default keys [S4]."
+  },
+  {
+   "question": "What is the minimum password length at Demo Bank?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": true,
+   "cited": [
+    "internal:demo-bank-security-policy.md"
+   ],
+   "latency_s": 9.044,
+   "answer": "According to [S1], passwords at Demo Bank must contain at least 14 characters. [S1]"
+  },
+  {
+   "question": "When should users be asked to authenticate again?",
+   "answered": true,
+   "reason": null,
+   "cited_expected": false,
+   "cited": [
+    "nist:AC-14",
+    "owasp:A07:2025"
+   ],
+   "latency_s": 15.669,
+   "answer": "Users should be asked to authenticate again when identification and authentication have not yet occurred, as per the discussion in [S4]. Additionally, based on [S5], organizations are recommended to enforce use of multi-factor authentication on all important systems to prevent authentication failures, which often occur due to the continued use of passwords as the sole authentication factor."
+  },
+  {
+   "question": "Which cryptographic mistakes lead to data exposure?",
+   "answered": false,
+   "reason": "no_citation",
+   "cited_expected": false,
+   "cited": [],
+   "latency_s": 19.992,
+   "answer": "The model's answer could not be linked to a source, so it was not shown."
+  }
+ ]
+}

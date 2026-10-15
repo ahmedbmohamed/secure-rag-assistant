@@ -62,6 +62,45 @@ flowchart LR
 
 **Cloud mode (opt-in).** If a client accepts a hosted LLM, `SRAG_LLM_MODE=cloud` must be confirmed with `SRAG_ALLOW_CLOUD=true`. Emails, phone numbers, IBANs, card numbers and IP addresses are then replaced by placeholders such as `<EMAIL_1>` before sending, and restored locally in the answer. In local mode, the service refuses to start if the LLM address is not on the machine or the private network.
 
+## Results
+
+Measured in CI on every push (`eval/run_eval.py`, gates in [`eval/gates.json`](eval/gates.json)) with the real embedding model:
+
+| Metric | Result | Gate |
+|---|---|---|
+| Expected document among the 5 sources given to the LLM (hit@5) | **96.2%** (51 of 53 questions) | at least 85% |
+| Mean reciprocal rank (MRR@5) | **0.931** | at least 0.70 |
+| Off-topic questions refused before calling the LLM | **91.7%** (11 of 12) | at least 80% |
+| Real questions wrongly refused | **0%** | at most 5% |
+| Prompt injection detection, precision and recall | **100% / 100%** (20 attacks, 25 normal questions) | at least 95% / 90% |
+
+The injection set was written while building the rules, so 100% says the known patterns are covered, not that every new attack is caught. That is why injection detection is only one of the layers.
+
+End-to-end, with the local LLM (`qwen2.5:3b` on a 4-core CPU, no GPU), on 20 questions:
+
+| Check | Result |
+|---|---|
+| Questions answered with sources | **95%** (19 of 20) |
+| Answers citing an expected document | **90%** of questions, **94.7%** of the answered ones |
+| Off-topic questions refused | **6 of 6** |
+| Injection attempts blocked | **6 of 6** |
+| Restricted runbook shown to a user without the role | **never** |
+| Median time per answer | **22 s** |
+
+Full results: [reports/eval.json](reports/eval.json) and [reports/e2e.json](reports/e2e.json). The one unanswered question was refused because the model's answer had no valid citation, which is the expected behaviour: no source, no answer.
+
+The evaluation sets are small and were written for this project, so these numbers show the system works as designed rather than a benchmark score.
+
+## Screenshots
+
+| Internal runbook, answered for a security-admin | OWASP answer for a staff user |
+|---|---|
+| ![Answer](docs/answer.png) | ![Standards](docs/standards.png) |
+| **Access control**: `user1` asks for the restricted runbook | **Prompt injection** blocked before the LLM |
+| ![Access control](docs/access_control.png) | ![Injection blocked](docs/injection_blocked.png) |
+
+Screenshots from the end-to-end workflow, with `qwen2.5:3b` running locally on the CI machine.
+
 ## Run it
 
 Requirements: Docker, about 4 GB of free disk space and 8 GB of RAM.
@@ -80,7 +119,7 @@ Without Docker, for development:
 
 ```bash
 pip install -r requirements-dev.txt && pip install -e .
-pytest                                  # 71 tests, pgvector tests need SRAG_TEST_DATABASE_URL
+pytest                                  # 76 tests, pgvector tests need SRAG_TEST_DATABASE_URL
 ollama pull qwen2.5:3b                  # https://ollama.com
 python scripts/create_users.py          # prints the API keys
 uvicorn api.main:app                    # in-memory index when SRAG_DATABASE_URL is not set
@@ -104,7 +143,7 @@ curl -X POST http://localhost:8000/ask -H "X-API-Key: $KEY" -H "Content-Type: ap
 ## CI pipeline
 
 1. Lint and format checks (ruff)
-2. 71 tests, including access control and search on a real PostgreSQL with pgvector
+2. 76 tests, including access control and search on a real PostgreSQL with pgvector
 3. **Quality gate**: retrieval, refusal and injection detection must stay above the thresholds in `eval/gates.json`
 4. Docker build and **Trivy** scan (fails on fixable critical vulnerabilities)
 5. Smoke test of the container: authentication, an answer with sources, a blocked injection and the audit log

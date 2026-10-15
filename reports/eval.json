@@ -1,0 +1,42 @@
+{
+ "embedder": "BAAI/bge-small-en-v1.5",
+ "questions": 53,
+ "hit_at_5": 0.962,
+ "mrr_at_5": 0.931,
+ "min_score": 0.55,
+ "out_of_scope_rejection": 0.917,
+ "in_scope_false_rejection": 0.0,
+ "score_in_scope_min": 0.601,
+ "score_out_of_scope_max": 0.562,
+ "injection_precision": 1.0,
+ "injection_recall": 1.0,
+ "retrieval_misses": [
+  {
+   "question": "When should users be asked to authenticate again?",
+   "expected": [
+    "nist-ia-11"
+   ],
+   "got": [
+    "nist-ia-5",
+    "nist-ia-5",
+    "nist-ia-5",
+    "nist-ac-14",
+    "owasp-a07"
+   ]
+  },
+  {
+   "question": "Combien de temps faut-il conserver les journaux de sécurité ?",
+   "expected": [
+    "nist-au-11",
+    "internal-demo-bank-security-policy"
+   ],
+   "got": [
+    "nist-si-19",
+    "nist-sc-23",
+    "nist-sc-10",
+    "nist-si-14",
+    "nist-au-8"
+   ]
+  }
+ ]
+}
