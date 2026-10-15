@@ -6,8 +6,9 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
+import srag.auth
 from srag.audit import AuditLog
-from srag.auth import UserDirectory, hash_key
+from srag.auth import Account, UserStore, hash_key, hash_password
 from srag.config import Settings
 from srag.embeddings import HashingEmbedder
 from srag.ingest.loaders import load_all
@@ -22,7 +23,14 @@ DATA = ROOT / "data"
 
 USER1 = User("user1", ("public", "staff"))
 USER2 = User("user2", ("public", "staff", "security-admin"))
-KEYS = {"user1": "key-user1", "user2": "key-user2"}
+KEYS = {"user1": "key-user1", "user2": "key-user2"}  # API keys of the service accounts used by the API tests
+PASSWORDS = {"alice": "Correct-Horse-Battery-71", "admin": "Admin-Strong-Phrase-93"}
+
+
+@pytest.fixture(autouse=True)
+def fast_password_hashing(monkeypatch):
+    # 600,000 PBKDF2 rounds are right in production and needlessly slow in tests.
+    monkeypatch.setattr(srag.auth, "PBKDF2_ITERATIONS", 1000)
 
 
 class ScriptedChatModel(BaseChatModel):
@@ -52,6 +60,7 @@ def settings(tmp_path) -> Settings:
         manifest_key="test-key",
         audit_log=tmp_path / "audit.jsonl",
         users_file=tmp_path / "users.json",
+        cookie_secure=False,
         ollama_url="http://localhost:11434",
     )
 
@@ -95,12 +104,15 @@ def assistant(store, embedder, model, audit, settings):
 
 
 @pytest.fixture
-def users():
-    return UserDirectory(
-        [
-            {"name": USER1.name, "roles": list(USER1.roles), "key_sha256": hash_key(KEYS["user1"])},
-            {"name": USER2.name, "roles": list(USER2.roles), "key_sha256": hash_key(KEYS["user2"])},
-        ]
+def users(tmp_path):
+    return UserStore(
+        tmp_path / "users.json",
+        accounts=[
+            Account(name=USER1.name, roles=list(USER1.roles), api_key_sha256=hash_key(KEYS["user1"]), service=True),
+            Account(name=USER2.name, roles=list(USER2.roles), api_key_sha256=hash_key(KEYS["user2"]), service=True),
+            Account(name="alice", roles=["public", "staff"], password_hash=hash_password(PASSWORDS["alice"])),
+            Account(name="admin", roles=["admin"], password_hash=hash_password(PASSWORDS["admin"])),
+        ],
     )
 
 

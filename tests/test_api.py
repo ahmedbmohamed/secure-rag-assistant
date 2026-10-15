@@ -21,7 +21,7 @@ def auth(user="user1"):
 
 def test_health_is_public(client):
     body = client.get("/health").json()
-    assert body["status"] == "ok" and body["mode"] == "local" and body["integrity"] == "ok"
+    assert body["status"] == "ok" and body["mode"] == "local" and body["integrity"] == "verified"
 
 
 def test_key_required(client, assistant):

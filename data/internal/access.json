@@ -1,0 +1,27 @@
+{
+ "files": {
+  "demo-bank-backup-policy.pdf": {
+   "title": "Demo Bank Backup Policy",
+   "roles": [
+    "staff",
+    "security-admin"
+   ],
+   "classification": "internal"
+  },
+  "demo-bank-access-review-procedure.docx": {
+   "title": "Demo Bank Access Review Procedure",
+   "roles": [
+    "staff",
+    "security-admin"
+   ],
+   "classification": "internal"
+  },
+  "demo-bank-vendor-risk-register.xlsx": {
+   "title": "Demo Bank Vendor Risk Register",
+   "roles": [
+    "security-admin"
+   ],
+   "classification": "confidential"
+  }
+ }
+}

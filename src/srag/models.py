@@ -1,6 +1,7 @@
 """Plain data types shared by every module."""
 
 import hashlib
+import uuid
 from dataclasses import dataclass, field
 
 
@@ -63,3 +64,4 @@ class Answer:
     mode: str = "local"
     masked_entities: int = 0
     latency_ms: int = 0
+    id: str = field(default_factory=lambda: uuid.uuid4().hex)

@@ -62,7 +62,7 @@ services:
     <<: *app
     volumes:
       - ./index:/app/index:ro
-      - ./config:/app/config:ro
+      - ./config:/app/config  # written when a user sets up MFA or an admin changes an account
       - ./logs:/app/logs
     networks: [backend, frontend]
     ports: ["127.0.0.1:8000:8000"]

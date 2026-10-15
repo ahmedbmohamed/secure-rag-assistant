@@ -113,6 +113,7 @@ class Assistant:
             mode=self.mode,
             refused=answer.refused,
             reason=answer.reason,
+            answer_id=answer.id,
             sources=[s.chunk.id for s in answer.sources],
             masked_entities=answer.masked_entities,
             latency_ms=answer.latency_ms,
@@ -150,6 +151,7 @@ class Assistant:
 
     def _refuse(self, reason: str, question: str, user: User, started: float, **details) -> Answer:
         latency = int((time.perf_counter() - started) * 1000)
+        answer = Answer(REFUSALS[reason], refused=True, reason=reason, mode=self.mode, latency_ms=latency)
         self.audit.write(
             "blocked_injection" if reason == "prompt_injection" else "ask",
             user.name,
@@ -157,7 +159,8 @@ class Assistant:
             mode=self.mode,
             refused=True,
             reason=reason,
+            answer_id=answer.id,
             latency_ms=latency,
             **details,
         )
-        return Answer(REFUSALS[reason], refused=True, reason=reason, mode=self.mode, latency_ms=latency)
+        return answer

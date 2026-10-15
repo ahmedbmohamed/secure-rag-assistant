@@ -131,3 +131,11 @@ def test_cloud_mode_must_be_explicitly_allowed():
         cloud_model="m",
         cloud_api_key="k",
     )
+
+
+def test_default_or_short_manifest_key_is_refused_with_a_database():
+    with pytest.raises(ValueError, match="SRAG_MANIFEST_KEY"):
+        Settings(database_url="postgresql://db/srag")
+    with pytest.raises(ValueError, match="SRAG_MANIFEST_KEY"):
+        Settings(database_url="postgresql://db/srag", manifest_key="too-short")
+    Settings(database_url="postgresql://db/srag", manifest_key="x" * 40)

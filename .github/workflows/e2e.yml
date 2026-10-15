@@ -25,6 +25,7 @@ jobs:
       SRAG_OLLAMA_URL: http://127.0.0.1:11434
       SRAG_OLLAMA_MODEL: qwen2.5:3b
       SRAG_EMBED_CACHE_DIR: ${{ github.workspace }}/.models
+      SRAG_MANIFEST_KEY: e2e-only-key-generated-for-this-run-0123456789
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -42,8 +43,16 @@ jobs:
         run: |
           python -m srag.ingest.pipeline
           python scripts/create_users.py > keys.txt
-          echo "SRAG_KEY_USER1=$(grep '^user1' keys.txt | awk '{print $NF}')" >> $GITHUB_ENV
-          echo "SRAG_KEY_USER2=$(grep '^user2' keys.txt | awk '{print $NF}')" >> $GITHUB_ENV
+          for name in admin user1 user2; do
+            value=$(grep "^  $name " keys.txt | awk '{print $NF}')
+            echo "::add-mask::$value"
+            echo "SRAG_PASSWORD_$(echo $name | tr a-z A-Z)=$value" >> $GITHUB_ENV
+          done
+          for pair in USER1:svc-eval-staff USER2:svc-eval-admin; do
+            value=$(grep "^  ${pair#*:} " keys.txt | awk '{print $NF}')
+            echo "::add-mask::$value"
+            echo "SRAG_KEY_${pair%%:*}=$value" >> $GITHUB_ENV
+          done
           rm keys.txt
       - name: Start the API and web interface
         run: |

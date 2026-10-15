@@ -4,6 +4,7 @@ import json
 import re
 from pathlib import Path
 
+from srag.ingest.files import EXTRACTORS, SUPPORTED, UnreadableFile
 from srag.models import Document
 
 OWASP_URL = "https://owasp.org/Top10/2025/{slug}/"
@@ -84,27 +85,61 @@ def _front_matter(raw: str) -> tuple[dict[str, str], str]:
     return fields, body.strip()
 
 
-def load_internal(folder: Path) -> list[Document]:
+DEFAULT_ROLES = ("security-admin",)  # a file nobody labelled is visible to the security team only
+
+
+def _read_access(folder: Path) -> dict:
+    """access.json gives the title, roles and classification of PDF, Word and Excel files."""
+    path = folder / "access.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8")).get("files", {})
+
+
+def load_internal(folder: Path, skipped: list[dict] | None = None) -> list[Document]:
+    skipped = skipped if skipped is not None else []
+    access = _read_access(folder)
     docs = []
-    for path in sorted(folder.glob("*.md")):
-        meta, body = _front_matter(path.read_text(encoding="utf-8"))
-        roles = tuple(r.strip() for r in meta.get("roles", "security-admin").split(",") if r.strip())
+    for path in sorted(p for p in folder.iterdir() if p.is_file()):
+        suffix = path.suffix.lower()
+        if path.name == "access.json" or path.name.startswith("."):
+            continue
+        if suffix not in SUPPORTED:
+            skipped.append({"file": path.name, "reason": f"unsupported format {suffix or '(none)'}"})
+            continue
+        meta: dict = {}
+        if suffix == ".md":
+            front, body = _front_matter(path.read_text(encoding="utf-8"))
+            meta = {"title": front.get("title"), "classification": front.get("classification")}
+            if "roles" in front:
+                meta["roles"] = [r.strip() for r in front["roles"].split(",") if r.strip()]
+        else:
+            try:
+                body = EXTRACTORS[suffix](path)
+            except UnreadableFile as exc:
+                skipped.append({"file": path.name, "reason": str(exc)})
+                continue
+        meta.update({k: v for k, v in access.get(path.name, {}).items() if v})
+        roles = tuple(meta.get("roles") or DEFAULT_ROLES)
+        if not meta.get("roles"):
+            skipped.append({"file": path.name, "reason": "no roles given: indexed for security-admin only"})
+        stem = path.stem if suffix == ".md" else f"{path.stem}-{suffix[1:]}"
         docs.append(
             Document(
-                id=f"internal-{path.stem}",
-                title=meta.get("title", path.stem),
+                id=f"internal-{stem}",
+                title=meta.get("title") or path.stem.replace("-", " ").capitalize(),
                 text=body,
                 source="internal",
                 reference=path.name,
                 url="",
                 roles=roles,
-                classification=meta.get("classification", "internal"),
+                classification=meta.get("classification") or "internal",
             )
         )
     return docs
 
 
-def load_all(data_dir: Path) -> list[Document]:
+def load_all(data_dir: Path, skipped: list[dict] | None = None) -> list[Document]:
     docs: list[Document] = []
     if (data_dir / "owasp").is_dir():
         docs += load_owasp(data_dir / "owasp")
@@ -112,5 +147,5 @@ def load_all(data_dir: Path) -> list[Document]:
     if nist.exists():
         docs += load_nist(nist)
     if (data_dir / "internal").is_dir():
-        docs += load_internal(data_dir / "internal")
+        docs += load_internal(data_dir / "internal", skipped)
     return docs

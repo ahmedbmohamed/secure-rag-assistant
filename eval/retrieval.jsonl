@@ -51,3 +51,9 @@
 {"question": "What should we do in case of ransomware?", "expected": ["internal-demo-bank-incident-runbook"]}
 {"question": "Comment prévenir les injections SQL ?", "expected": ["owasp-a05"]}
 {"question": "Combien de temps faut-il conserver les journaux de sécurité ?", "expected": ["nist-au-11", "internal-demo-bank-security-policy"]}
+{"question": "What are the recovery point and recovery time objectives for critical systems?", "expected": ["internal-demo-bank-backup-policy-pdf", "nist-cp-10", "nist-cp-2"]}
+{"question": "How long are daily backups kept at Demo Bank?", "expected": ["internal-demo-bank-backup-policy-pdf"]}
+{"question": "How often are administrator accounts reviewed?", "expected": ["internal-demo-bank-access-review-procedure-docx", "internal-demo-bank-security-policy", "nist-ac-2"]}
+{"question": "What happens to access rights that the data owner does not confirm?", "expected": ["internal-demo-bank-access-review-procedure-docx"]}
+{"question": "Which vendors have a high risk level and access to customer data?", "expected": ["internal-demo-bank-vendor-risk-register-xlsx"]}
+{"question": "How often must a medium risk vendor be reviewed?", "expected": ["internal-demo-bank-vendor-risk-register-xlsx"]}

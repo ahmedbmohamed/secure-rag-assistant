@@ -65,11 +65,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Index the documents")
     parser.parse_args()
     settings = get_settings()
-    docs = load_all(settings.data_dir)
+    skipped: list[dict] = []
+    docs = load_all(settings.data_dir, skipped)
     embedder = make_embedder(settings.embedder, settings.embed_model, settings.embed_cache_dir)
     store = make_store(settings.database_url)
     report = ingest(docs, store, embedder, settings)
-    print(json.dumps(report.__dict__, indent=1))
+    print(json.dumps({**report.__dict__, "skipped_files": skipped}, indent=1))
 
 
 if __name__ == "__main__":

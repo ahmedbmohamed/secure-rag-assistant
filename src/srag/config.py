@@ -22,6 +22,7 @@ def _default_home() -> Path:
 
 
 HOME = _default_home()
+DEFAULT_MANIFEST_KEY = "change-me-in-production"
 
 
 class Settings(BaseSettings):
@@ -31,7 +32,7 @@ class Settings(BaseSettings):
     database_url: str | None = None
     data_dir: Path = HOME / "data"
     manifest_path: Path = HOME / "index" / "manifest.json"
-    manifest_key: str = "change-me-in-production"
+    manifest_key: str = DEFAULT_MANIFEST_KEY
 
     # Embeddings: "fastembed" runs an ONNX model on the CPU, "hashing" needs no model (tests).
     embedder: Literal["fastembed", "hashing"] = "fastembed"
@@ -60,8 +61,16 @@ class Settings(BaseSettings):
     injection_threshold: float = 0.6
     rate_limit_per_minute: int = 30
 
-    # Users, audit
+    # Accounts and sessions
     users_file: Path = HOME / "config" / "users.json"
+    require_mfa: bool = True
+    session_idle_minutes: int = 30
+    session_max_hours: int = 8
+    cookie_secure: bool = True  # browsers accept Secure cookies on http://localhost; set false only for tests
+    lockout_threshold: int = 5
+    lockout_minutes: int = 15
+    ip_failure_limit: int = 20
+
     audit_log: Path = HOME / "logs" / "audit.jsonl"
 
     @model_validator(mode="after")
@@ -75,6 +84,11 @@ class Settings(BaseSettings):
                 raise ValueError("Cloud mode needs SRAG_CLOUD_BASE_URL, SRAG_CLOUD_MODEL and SRAG_CLOUD_API_KEY.")
         else:
             check_private_endpoint(self.ollama_url)
+        if self.database_url and (self.manifest_key == DEFAULT_MANIFEST_KEY or len(self.manifest_key) < 32):
+            raise ValueError(
+                "SRAG_MANIFEST_KEY must be set to a random secret of at least 32 characters "
+                '(for example: python -c "import secrets; print(secrets.token_urlsafe(32))").'
+            )
         return self
 
     @property

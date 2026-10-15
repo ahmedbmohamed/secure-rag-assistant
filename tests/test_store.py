@@ -50,3 +50,11 @@ def test_scores_are_cosine_similarities(any_store, embedder):
     hits = _search(any_store, embedder, "multi-factor authentication for remote access", USER1)
     assert all(-1.0 <= h.score <= 1.0 for h in hits)
     assert hits == sorted(hits, key=lambda h: -h.rank_score)
+
+
+def test_excel_register_is_only_for_security_admins(any_store, embedder):
+    question = "Which vendors have a high risk level and access to customer data?"
+    staff = _search(any_store, embedder, question, USER1, k=20)
+    admin = _search(any_store, embedder, question, USER2, k=20)
+    assert all(h.chunk.doc_id != "internal-demo-bank-vendor-risk-register-xlsx" for h in staff)
+    assert any(h.chunk.doc_id == "internal-demo-bank-vendor-risk-register-xlsx" for h in admin)

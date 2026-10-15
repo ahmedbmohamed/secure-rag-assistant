@@ -119,6 +119,10 @@ class PgVectorStore:
         self._conn = psycopg.connect(url, autocommit=True)
         self._conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
         register_vector(self._conn)
+        version = self._conn.execute("SELECT extversion FROM pg_extension WHERE extname = 'vector'").fetchone()[0]
+        # pgvector 0.8+ can keep scanning the HNSW graph until enough rows pass the role filter.
+        # Older versions could return fewer allowed rows than requested, so they use an exact scan.
+        self._iterative = tuple(int(x) for x in version.split(".")[:2]) >= (0, 8)
 
     def reset(self, dim: int) -> None:
         c = self._conn
@@ -194,8 +198,12 @@ class PgVectorStore:
         WHERE c.roles && %(roles)s
         ORDER BY f.rrf DESC LIMIT %(k)s
         """
-        with self._conn.cursor() as cur:
-            cur.execute("SET hnsw.ef_search = 100")
+        with self._conn.transaction(), self._conn.cursor() as cur:
+            if self._iterative:
+                cur.execute("SET LOCAL hnsw.iterative_scan = strict_order")
+                cur.execute("SET LOCAL hnsw.ef_search = 100")
+            else:
+                cur.execute("SET LOCAL enable_indexscan = off")
             cur.execute(
                 sql,
                 {
